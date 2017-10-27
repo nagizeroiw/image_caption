@@ -43,7 +43,7 @@ class Config():
     # whether use cuda
     use_cuda = True
     # number of epochs for training
-    n_epoch = 10
+    n_epoch = 5
     # learning_rate
     learning_rate = 1e-4
     # the frequency of log pringing when training
