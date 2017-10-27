@@ -4,5 +4,6 @@ codes/*.pyc
 codes/eval/data/
 dataset/*.pkl
 dataset/*.pyc
+dataset/*.json
 dataset/image_caption_data/
 result/
