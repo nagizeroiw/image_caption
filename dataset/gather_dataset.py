@@ -289,7 +289,8 @@ def build_valid_reference_json():
 
         for caption in captions:
             cap = {}
-            cap['caption'] = caption['caption']
+            cap_list = caption['caption'].split(' ')
+            cap['caption'] = ' '.join([x for x in cap_list])  # repr(x)[2:-1] for x in cap_list])
             cap['id'] = current_caption_id
             cap['image_id'] = image['id']
 
@@ -302,9 +303,24 @@ def build_valid_reference_json():
     result['annotations'] = annotations
     result['images'] = images
     result['type'] = 'captions'
+    result['info'] = {
+        'contributor': 'Ke Su',
+        'description': 'CaptionEval',
+        'url': 's',
+        'version': '1',
+        'year': '2017'
+    }
+    result['licenses'] = [
+        {
+            'url': 's'
+        }
+    ]
+
+    print result['annotations'][0]['caption']
 
     output_file_name = 'valid_reference.json'
     result_json = json.dumps(result, ensure_ascii=False)
+    # result_json = result_json.replace('\\\\', '\\')
     with io.open(output_file_name, 'w', encoding='utf-8') as file:
         file.write(result_json)
 

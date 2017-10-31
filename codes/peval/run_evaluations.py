@@ -30,22 +30,18 @@ def compute_m1(json_predictions_file, reference_file):
     """Compute m1_score"""
     m1_score = {}
     m1_score['error'] = 0
-    try:
-        coco = COCO(reference_file)
-        coco_res = coco.loadRes(json_predictions_file)
+    coco = COCO(reference_file)
+    coco_res = coco.loadRes(json_predictions_file)
 
-        # create coco_eval object.
-        coco_eval = COCOEvalCap(coco, coco_res)
+    # create coco_eval object.
+    coco_eval = COCOEvalCap(coco, coco_res)
 
-        # evaluate results
-        coco_eval.evaluate()
-    except Exception:
-        m1_score['error'] = 1
-    else:
-        # print output evaluation scores
-        for metric, score in coco_eval.eval.items():
-            print '%s: %.3f'%(metric, score)
-            m1_score[metric] = score
+    # evaluate results
+    coco_eval.evaluate()
+    # print output evaluation scores
+    for metric, score in coco_eval.eval.items():
+        print '%s: %.3f'%(metric, score)
+        m1_score[metric] = score
     return m1_score
 
 

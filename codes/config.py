@@ -19,6 +19,7 @@ class Config():
     # ###################### Dataset ######################
 
     # maximum length of caption sentences
+    # 30 may be too long
     maxlen = 20
     # total number of words in the worddict
     # (indicates the maximum possible value of worddict)
@@ -26,7 +27,10 @@ class Config():
     # dim of pre-trained CNN.
     dim_feature = 1536
     # batch size of SGD (both train and valid)
-    batch_size = 64
+    batch_size = 32
+    # num of examples per epoch
+    #  this number is not precise.
+    num_examples = 586363
 
     # ###################### Model ######################
 
@@ -37,15 +41,19 @@ class Config():
     dim_hidden = 1024
     # layers of LSTM neurons
     num_layers = 1
+    # size of beam search
+    beam_size = 3
 
     # ###################### Training ######################
 
     # whether use cuda
     use_cuda = True
     # number of epochs for training
-    n_epoch = 5
+    n_epoch = 20
     # learning_rate
-    learning_rate = 1e-4
+    learning_rate = 1e-3
+    # gradient clip
+    gradient_clip = 5.0
     # the frequency of log pringing when training
     train_log_freq = 200
     # the frequency of saving losses for visualization
@@ -62,18 +70,18 @@ class Config():
     # ###################### Validating, Sampling ######################
 
     # the frequency of validating
-    valid_freq = 25
+    valid_freq = 10
     # the frequency of validation plotting
     valid_plot_freq = 500
     # the frequency of sampling
-    sample_freq = 8000
+    sample_freq = 4000
     # sampling counts (better < batch_size)
     sample_count = 4
-    # size of beam search
-    beam_size = 20
 
     # ###################### Inference ######################
 
+    # the frequency of inference during training
+    check_freq = 50000
     # the frequency of inference output
     inference_freq = 100
     # output json name

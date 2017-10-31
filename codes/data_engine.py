@@ -122,19 +122,24 @@ class DataEngine():
             # print 'processed %d/%d caps' % (i, len(IDs))
             imgID, capID = ID.split('_')
 
-            # feature (1, 1536) -> (1536,)
-            feat = self.feature[imgID][0, :]
-            feat_list.append(feat)
             words = get_words(imgID, capID)
 
             seq = []
             for w in words:
                 seq.append(self.worddict.get(w, self.worddict['<UNK>']))
+
+            # only short sentences are used.
             if len(seq) >= Config.maxlen:
-                seq = seq[:Config.maxlen - 1]
+                continue
             seqs.append(seq)
 
+            # feature (1, 1536) -> (1536,)
+            feat = self.feature[imgID][0, :]
+            feat_list.append(feat)
+
         n_samples = len(seqs)
+        if n_samples == 0:
+            return None, None, None
 
         # as demanded by pack_padded_sequence,
         # feature and seq should be sorted according to length.

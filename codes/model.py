@@ -67,7 +67,7 @@ class Caption(nn.Module):
         self.input = nn.Linear(input_size, embedding_size)
         self.embedding = nn.Embedding(n_words, embedding_size)
         self.rnn = nn.LSTM(embedding_size, hidden_size, num_layers=num_layers)
-        self.dropout = nn.Dropout(0.3)
+        self.dropout = nn.Dropout(0.4)
         self.output = nn.Linear(hidden_size, n_words)
         self.init_weights()
 
@@ -85,6 +85,9 @@ class Caption(nn.Module):
         #   of the last word is fed into the LSTM.
         embeddings = torch.cat((features.unsqueeze(1), embeddings), 1)
 
+        # ####################################################### should test this dropout
+        embeddings = self.dropout(embeddings)
+
         # packed embeddings -> contains image feature and embedded words
         packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
 
@@ -99,11 +102,24 @@ class Caption(nn.Module):
         return outputs
 
     def init_weights(self):
-        self.input.weight.data.uniform_(-0.1, 0.1)
-        self.input.bias.data.fill_(0)
-        self.embedding.weight.data.uniform_(-0.1, 0.1)
-        self.output.weight.data.uniform_(-0.1, 0.1)
-        self.output.bias.data.fill_(0)
+        v = 0.05
+        self.input.weight.data.normal_(0, std=v)
+        self.input.bias.data.normal_(0, std=v)
+        self.embedding.weight.data.normal_(0, std=v)
+        self.output.weight.data.normal_(0, std=v)
+        self.output.bias.data.normal_(0, std=v)
+
+        nn.init.normal(self.rnn.weight_ih_l0, 0.001, std=v)
+        nn.init.normal(self.rnn.weight_hh_l0, 0.001, std=v)
+        nn.init.normal(self.rnn.bias_ih_l0, 0.001, std=v)
+        nn.init.normal(self.rnn.bias_hh_l0, 0.001, std=v)
+
+        # Jozefowicz, R., Zaremba, W., & Sutskever, I. (2015).
+        #  An empirical exploration of recurrent network architectures.
+        #  In Proceedings of the 32nd International Conference on Machine Learning (ICML-15)
+        #  (pp. 2342-2350).
+        self.rnn.bias_ih_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
+        self.rnn.bias_hh_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
         # RNN init_weights?
 
     def beam_search(self, feature):
@@ -175,9 +191,9 @@ class Caption(nn.Module):
                     sentence = p_sentence.sentence + [words[i, k]]
                     logprob = p_sentence.logprob + logprobs[i, k]
 
-                    # Scores are given by mean log-likelihood`s of all words.
                     #  Note that this metric is controversial.
-                    score = logprob / len(sentence)
+                    score = logprob
+                    # score = logprob / len(sentence)
 
                     if words[i, k] == 0:  # <eos>
                         beam = Sentence(sentence, state, score, logprob)
@@ -188,7 +204,7 @@ class Caption(nn.Module):
             if sentences.size() == 0:
                 break
 
-        if not answers.size():
+        if answers.size() == 0:
             answers = sentences
 
         answer = answers.extract()

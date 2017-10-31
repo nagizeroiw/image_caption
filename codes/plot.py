@@ -12,7 +12,7 @@ def show_xy(x, y, filename='plot.png'):
     # loc = ticker.MultipleLocator(base=0.2)
     # ax.yaxis.set_major_locator(loc)
     # plt.plot(points)
-    ax.plot(x, y)
+    ax.plot(x, y, label='valid METEOR')
     fig.savefig(filename)
     plt.close(fig)
 
