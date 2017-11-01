@@ -66,6 +66,8 @@ class Caption(nn.Module):
 
         self.input = nn.Linear(input_size, embedding_size)
         self.embedding = nn.Embedding(n_words, embedding_size)
+        self.init_state_h = nn.Linear(input_size, hidden_size)
+        self.init_state_c = nn.Linear(input_size, hidden_size)
         self.rnn = nn.LSTM(embedding_size, hidden_size, num_layers=num_layers)
         self.dropout = nn.Dropout(0.4)
         self.output = nn.Linear(hidden_size, n_words)
@@ -74,7 +76,7 @@ class Caption(nn.Module):
     def forward(self, features, seqs, lengths):
 
         # (batch_size, embedding_size)
-        features = self.input(features)
+        embed_features = self.input(features)
 
         # (batch_size, max_seqlen, embedding_size)
         embeddings = self.embedding(seqs)
@@ -83,18 +85,27 @@ class Caption(nn.Module):
         # 'features' is fed into the LSTM as the initial input
         # at each following time step, a embedded represention
         #   of the last word is fed into the LSTM.
-        embeddings = torch.cat((features.unsqueeze(1), embeddings), 1)
+        embeddings = torch.cat((embed_features.unsqueeze(1), embeddings), 1)
 
-        # ####################################################### should test this dropout
+        # dropout on LSTM input
         embeddings = self.dropout(embeddings)
+
+        # LSTM initial states
+        # lstm_state_h = self.init_state_h(features)
+        # lstm_state_h = nn.functional.relu(lstm_state_h)  # (batch_size, hidden_size)
+        # lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
+        # lstm_state_c = self.init_state_h(features)
+        # lstm_state_c = nn.functional.relu(lstm_state_c)  # (batch_size, hidden_size)
+        # lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
 
         # packed embeddings -> contains image feature and embedded words
         packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         # all hidden outputs, sth. like (1, batch_size, hidden_size)
+        # hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
         hiddens, _ = self.rnn(packed)
 
-        # dropout at hidden-> output
+        # dropout on LSTM output
         outputs = self.dropout(hiddens[0])
 
         # sth. like (batch_size, n_words)
@@ -102,24 +113,32 @@ class Caption(nn.Module):
         return outputs
 
     def init_weights(self):
-        v = 0.05
-        self.input.weight.data.normal_(0, std=v)
-        self.input.bias.data.normal_(0, std=v)
-        self.embedding.weight.data.normal_(0, std=v)
-        self.output.weight.data.normal_(0, std=v)
-        self.output.bias.data.normal_(0, std=v)
+        v = 0.01
+        self.input.weight.data.uniform_(-v, v)
+        self.input.bias.data.fill_(0)
 
-        nn.init.normal(self.rnn.weight_ih_l0, 0.001, std=v)
-        nn.init.normal(self.rnn.weight_hh_l0, 0.001, std=v)
-        nn.init.normal(self.rnn.bias_ih_l0, 0.001, std=v)
-        nn.init.normal(self.rnn.bias_hh_l0, 0.001, std=v)
+        self.embedding.weight.data.uniform_(-v, v)
+
+        self.output.weight.data.uniform_(-v, v)
+        self.output.bias.data.fill_(0)
+
+        self.init_state_h.weight.data.uniform_(-v, v)
+        self.init_state_h.bias.data.fill_(0)
+
+        self.init_state_c.weight.data.uniform_(-v, v)
+        self.init_state_c.bias.data.fill_(0)
+
+        nn.init.uniform(self.rnn.weight_ih_l0, -v, v)
+        nn.init.uniform(self.rnn.weight_hh_l0, -v, v)
+        nn.init.uniform(self.rnn.bias_ih_l0, -v, v)
+        nn.init.uniform(self.rnn.bias_hh_l0, -v, v)
 
         # Jozefowicz, R., Zaremba, W., & Sutskever, I. (2015).
         #  An empirical exploration of recurrent network architectures.
         #  In Proceedings of the 32nd International Conference on Machine Learning (ICML-15)
         #  (pp. 2342-2350).
-        self.rnn.bias_ih_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
-        self.rnn.bias_hh_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
+        # self.rnn.bias_ih_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
+        # self.rnn.bias_hh_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
         # RNN init_weights?
 
     def beam_search(self, feature):

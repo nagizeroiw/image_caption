@@ -186,12 +186,12 @@ def test_data_engine():
 
         print ' seen %d batches, time used %.2f seconds.' % (i, time.time() - t0)
 
-        if i == 10:
+        if i == 9:
             print ' feature.shape, seq.shape, length.shape', feature.shape, seq.shape, length.shape
             print ' examine seq'
             print length[:5]
             print seq[0, :]
-            print u' '.join([engine.word_idict[x] for x in seq[0, :]])
+            print u' '.join([engine.word_idict[x] for x in seq[0, :length[0]]])
             break
 
     print '>>> test_data_engine() ended. [time %.2f]' % (time.time() - t)

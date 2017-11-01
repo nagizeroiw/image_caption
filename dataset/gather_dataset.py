@@ -37,6 +37,16 @@ def dump_pkl(obj, pkl_file_name):
         return cPickle.dump(obj, pkl_file, protocol=cPickle.HIGHEST_PROTOCOL)
 
 
+def load_test_set():
+    test_dir = './image_caption_data/test1/'
+    test_images_dir = test_dir + 'caption_test1_images_20170923/'
+
+    # list of 'vid100002'
+    test_vids = []
+    # dict of 'vid100002' -> './test1/***images**/3905ofjoawienf.jpg'
+    vid2name_test = {}
+
+
 def load_dataset():
 
     '''
@@ -91,13 +101,11 @@ def load_dataset():
     wordcount = {}
 
     # current parsing vid
-    current_vid = 0
+    known_vid = 0
 
     print '>>> reading AIC dataset...'
 
-    def parse_dataset(caption_dir, image_dir, vids_list, pairs_list):
-
-        global current_vid, vid2name, caps
+    def parse_dataset(caption_dir, image_dir, vids_list, pairs_list, current_vid):
 
         with open(caption_dir, 'r') as caption_file:
             caption_content = json.load(caption_file)
@@ -145,9 +153,11 @@ def load_dataset():
                 # maintain caps
                 caps[this_vid] = cap_list
 
+        return current_vid
+
     # parse train and valid dataset
-    parse_dataset(train_caption_dir, train_images_dir, train_vids, train)
-    parse_dataset(valid_caption_dir, valid_images_dir, valid_vids, valid)
+    known_vid = parse_dataset(train_caption_dir, train_images_dir, train_vids, train, current_vid=known_vid)
+    parse_dataset(valid_caption_dir, valid_images_dir, valid_vids, valid, current_vid=known_vid)
 
     # maintain worddict
     #  item: (word, count)
@@ -330,9 +340,9 @@ def build_valid_reference_json():
 if __name__ == '__main__':
 
     # load dataset of the original data format
-    # load_dataset()
+    load_dataset()
 
     # observe dataset
     # look_dataset()
 
-    build_valid_reference_json()
+    # build_valid_reference_json()

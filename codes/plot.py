@@ -17,12 +17,12 @@ def show_xy(x, y, filename='plot.png'):
     plt.close(fig)
 
 
-def compare_xy(x1, y1, x2, y2, filename='plot.png'):
+def compare_xy(x1, y1, x2, y2, filename='plot.png', label1='train loss', label2='valid loss'):
 
     plt.figure()
     fig, ax = plt.subplots()
-    ax.plot(x1, y1, 'b-', label='train loss')
-    ax.plot(x2, y2, 'r-', label='valid loss')
+    ax.plot(x1, y1, 'b-', label=label1)
+    ax.plot(x2, y2, 'r-', label=label2)
     plt.legend()
     fig.savefig(filename)
     plt.close(fig)

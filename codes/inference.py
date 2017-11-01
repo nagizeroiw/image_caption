@@ -72,7 +72,7 @@ def main():
     with io.open(Config.inference_file, 'w', encoding='utf-8') as file:
         file.write(result_json)
 
-    print '>>> End inferencing. [time %.2f]' % (time.time() - t)
+    print '>>> end inferencing. [time %.2f]' % (time.time() - t)
 
 
 if __name__ == '__main__':

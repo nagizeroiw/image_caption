@@ -15,6 +15,8 @@ class Config():
     ckpt_dir = result_dir + 'checkpoint/'
     # inferenced json dir
     json_dir = result_dir + 'output/'
+    # eval result dir
+    eval_dir = result_dir + 'output/'
 
     # ###################### Dataset ######################
 
@@ -27,7 +29,7 @@ class Config():
     # dim of pre-trained CNN.
     dim_feature = 1536
     # batch size of SGD (both train and valid)
-    batch_size = 32
+    batch_size = 64
     # num of examples per epoch
     #  this number is not precise.
     num_examples = 586363
@@ -50,12 +52,14 @@ class Config():
     use_cuda = True
     # number of epochs for training
     n_epoch = 20
+    # number of updates (early stopping)
+    n_updates = 500000
     # learning_rate
-    learning_rate = 1e-3
+    learning_rate = 2e-4
     # gradient clip
     gradient_clip = 5.0
     # the frequency of log pringing when training
-    train_log_freq = 200
+    train_log_freq = 500
     # the frequency of saving losses for visualization
     train_plot_freq = 500
     # if load training checkpoint
@@ -65,7 +69,7 @@ class Config():
     # if debugging (only update once)
     is_debug = False
     # the frequency of plotting a temporary graph
-    plot_freq = 50000
+    plot_freq = 25000
 
     # ###################### Validating, Sampling ######################
 
@@ -78,10 +82,12 @@ class Config():
     # sampling counts (better < batch_size)
     sample_count = 4
 
-    # ###################### Inference ######################
+    # ###################### Inference, Evaluation ######################
 
     # the frequency of inference during training
-    check_freq = 50000
+    check_freq = 25000
+    # eval file
+    eval_file = eval_dir + 'result.txt'
     # the frequency of inference output
     inference_freq = 100
     # output json name

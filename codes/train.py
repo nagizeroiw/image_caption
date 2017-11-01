@@ -43,7 +43,11 @@ def main():
     iters, losses = [], []
     valid_iters, valid_losses = [], []
     # for eval
-    eval_iters, eval_results = [], []
+    eval_iters, eval_m, eval_b = [], [], []
+
+    # clear eval result file
+    with open(Config.eval_file, 'w') as file:
+        file.write('  update  B-4    C    M    R\n')
 
     if Config.is_reload:
         print '>>> Loading checkpoint...'
@@ -236,20 +240,27 @@ def main():
                 # show and save results
                 print m1_score
                 eval_iters.append(uid)
-                eval_results.append(m1_score['METEOR'])
+                eval_m.append(m1_score['METEOR'])
+                eval_b.append(m1_score['Bleu_4'])
+
+                # save results to file
+                with open(Config.eval_file, 'a') as file:
+                    file.write('%8d %4f %4f %4f %4f\n' % (uid, m1_score['Bleu_4'], m1_score['CIDEr'],
+                                                          m1_score['METEOR'], m1_score['ROUGE_L']))
 
                 # save results
                 print '>>> Saving visualized METEOR curve to %s.' % (Config.plot_dir)
-                plot.show_xy(eval_iters, eval_results, Config.plot_dir + 'eval.png')
+                plot.compare_xy(eval_iters, eval_m, eval_iters, eval_b,
+                                Config.plot_dir + 'eval.png', 'M', 'B4')
 
                 print '[Inference] inference done.'
 
             # only update once if debugging
-            if Config.is_debug:
+            if Config.is_debug or uid > Config.n_updates:
                 break
 
         # quit if debugging
-        if Config.is_debug:
+        if Config.is_debug or uid > Config.n_updates:
             break
 
     if Config.is_debug:
@@ -275,9 +286,6 @@ def main():
 
     print '>>> Saving (final) visualized loss curve to %s.' % (Config.plot_dir)
     plot.compare_xy(iters, losses, valid_iters, valid_losses, Config.plot_dir + 'plot.png')
-
-    print '>>> Saving visualized METEOR curve to %s.' % (Config.plot_dir)
-    plot.show_xy(eval_iters, eval_results, Config.plot_dir + 'eval.png')
 
     print '>>> End training. [time %.2f]' % (time.time() - t)
 
