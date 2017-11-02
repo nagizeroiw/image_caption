@@ -91,19 +91,19 @@ class Caption(nn.Module):
         embeddings = self.dropout(embeddings)
 
         # LSTM initial states
-        # lstm_state_h = self.init_state_h(self.dropout(features))
-        # lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
-        # lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
-        # lstm_state_c = self.init_state_h(self.dropout(features))
-        # lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
-        # lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
+        lstm_state_h = self.init_state_h(self.dropout(features))
+        lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
+        lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
+        lstm_state_c = self.init_state_h(self.dropout(features))
+        lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
+        lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
 
         # packed embeddings -> contains image feature and embedded words
         packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         # all hidden outputs, sth. like (1, batch_size, hidden_size)
-        # hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
-        hiddens, _ = self.rnn(packed)
+        hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
+        # hiddens, _ = self.rnn(packed)
 
         # dropout on LSTM output
         outputs = self.dropout(hiddens[0])
@@ -167,8 +167,17 @@ class Caption(nn.Module):
         input = self.input(feature)
         input = input.unsqueeze(0).unsqueeze(0)  # (1, 1, embed_size)
 
-        state = (Variable(torch.zeros(self.num_layers, 1, self.hidden_size)),
-                 Variable(torch.zeros(self.num_layers, 1, self.hidden_size)))
+        # initialize states
+
+        # LSTM initial states
+        lstm_state_h = self.init_state_h(self.dropout(feature))
+        lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
+        lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
+        lstm_state_c = self.init_state_h(self.dropout(feature))
+        lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
+        lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
+
+        state = (lstm_state_h, lstm_state_c)
         if Config.use_cuda:
             state = [s.cuda() for s in state]
 
