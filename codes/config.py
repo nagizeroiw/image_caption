@@ -40,7 +40,7 @@ class Config():
     dim_embedding = 512
     # dim of LSTM hidden neurons
     #  3518 in yinpeng`s paper
-    dim_hidden = 1024
+    dim_hidden = 512
     # layers of LSTM neurons
     num_layers = 1
     # size of beam search

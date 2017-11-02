@@ -14,6 +14,7 @@ import json
 import io
 import sys
 import hashlib
+import os
 
 import progressbar
 
@@ -45,6 +46,24 @@ def load_test_set():
     test_vids = []
     # dict of 'vid100002' -> './test1/***images**/3905ofjoawienf.jpg'
     vid2name_test = {}
+
+    dump_pkl(test_vids, 'test_vids.pkl')
+    dump_pkl(vid2name_test, 'vid2name_test.pkl')
+
+    image_files = os.listdir(test_images_dir)
+    image_files = [f for f in image_files if os.path.isfile(os.path.join(test_images_dir, f))]
+
+    print len(image_files)
+
+    current_test_vid = 300000  # len(train_vids + valid_vids) == 240000
+    for i, image_name in enumerate(image_files):
+        vid = 'vid%d' % (current_test_vid + i)
+        test_vids.append(vid)
+        vid2name_test[vid] = os.path.join(test_images_dir, f)
+
+    dump_pkl(test_vids, 'test_vids.pkl')
+    dump_pkl(vid2name_test, 'vid2name_test.pkl')
+    print len(test_vids)
 
 
 def load_dataset():
@@ -340,7 +359,10 @@ def build_valid_reference_json():
 if __name__ == '__main__':
 
     # load dataset of the original data format
-    load_dataset()
+    # load_dataset()
+
+    # load test set of the original data format for inference
+    load_test_set()
 
     # observe dataset
     # look_dataset()

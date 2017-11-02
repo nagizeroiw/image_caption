@@ -16,7 +16,7 @@ from data_engine import DataEngine
 from config import Config
 
 
-def main():
+def main(file_name=Config.inference_file):
 
     # init data engine
     data_engine = DataEngine()
@@ -69,7 +69,7 @@ def main():
 
     # end
     result_json = json.dumps(result, ensure_ascii=False)
-    with io.open(Config.inference_file, 'w', encoding='utf-8') as file:
+    with io.open(file_name, 'w', encoding='utf-8') as file:
         file.write(result_json)
 
     print '>>> end inferencing. [time %.2f]' % (time.time() - t)
