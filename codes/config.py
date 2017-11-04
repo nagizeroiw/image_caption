@@ -50,6 +50,9 @@ class Config():
     # if lstm init state trainable
     lstm_init_state = False
 
+    # model name
+    model_name = 'bigger_40'
+
     # ###################### Training ######################
 
     # whether use cuda
@@ -69,7 +72,7 @@ class Config():
     # if load training checkpoint
     is_reload = False
     # training checkpoint name
-    train_ckpt_name = ckpt_dir + 'training_bigger_40.ckpt'
+    train_ckpt_name = ckpt_dir + 'training_%s.ckpt' % model_name
     # if debugging (only update once)
     is_debug = False
     # the frequency of plotting a temporary graph
@@ -93,11 +96,15 @@ class Config():
     # the frequency of inference during training
     check_freq = 25000
     # eval file
-    eval_file = eval_dir + 'result.txt'
+    eval_file = eval_dir + 'result_%s.txt' % model_name
+    # plot file
+    loss_plot_file = plot_dir + 'loss_%s.txt' % model_name
+    # eval plot file
+    eval_plot_file = plot_dir + 'eval_%s.txt' % model_name
     # the frequency of inference output
     inference_freq = 100
     # output json name
-    inference_file = json_dir + 'inferenced.json'
+    inference_file = json_dir + 'inferenced_%s.json' % model_name
 
     # the name of checkpoint file used when testing
     test_ckpt_name = ckpt_dir + 'training.ckpt'

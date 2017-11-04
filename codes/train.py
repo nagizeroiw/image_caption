@@ -208,18 +208,18 @@ def main():
                 sampling('train', data_engine.train, data_engine.kf_train)
                 sampling('valid', data_engine.valid, data_engine.kf_valid)
 
-            # saving temporary loss curve
+            # saving loss curve
             if uid % Config.plot_freq == 0:
 
-                print '[Visualization] Saving loss curve to %s.' % (Config.plot_dir)
-                plot.compare_xy(iters, losses, valid_iters, valid_losses, Config.plot_dir + 'plot.png')
+                print '[Visualization] Saving loss curve to %s.' % (Config.loss_plot_file)
+                plot.compare_xy(iters, losses, valid_iters, valid_losses, Config.loss_plot_file)
 
             # inference
             if uid % Config.check_freq == 0:
 
                 print '[Inference] check model performance'
 
-                print '>>> Saving checkpoint uid%d to %s.' % (uid, Config.ckpt_dir)
+                print '>>> Saving checkpoint uid%d to %s.' % (uid, Config.train_ckpt_name)
                 torch.save({'state_dict': model.state_dict(),
                             'uid': uid,
                             'start_epoch': start_epoch + Config.n_epoch,
@@ -234,7 +234,7 @@ def main():
                 inference.main()
 
                 # evaluation
-                m1_score = compute_m1('/home/kesu/image_caption/result/output/inferenced.json',
+                m1_score = compute_m1(Config.json_dir,
                                       '/home/kesu/image_caption/dataset/valid_reference.json')
 
                 # show and save results
@@ -249,9 +249,9 @@ def main():
                                                           m1_score['METEOR'], m1_score['ROUGE_L']))
 
                 # save results
-                print '>>> Saving visualized METEOR curve to %s.' % (Config.plot_dir)
+                print '>>> Saving visualized METEOR curve to %s.' % (Config.eval_plot_file)
                 plot.compare_xy(eval_iters, eval_m, eval_iters, eval_b,
-                                Config.plot_dir + 'eval.png', 'M', 'B4')
+                                Config.eval_plot_file, 'M', 'B4')
 
                 print '[Inference] inference done.'
 
@@ -283,9 +283,6 @@ def main():
                 'valid_losses': valid_losses,
                 'time': str(datetime.datetime.now())},
                Config.train_ckpt_name)
-
-    print '>>> Saving (final) visualized loss curve to %s.' % (Config.plot_dir)
-    plot.compare_xy(iters, losses, valid_iters, valid_losses, Config.plot_dir + 'plot.png')
 
     print '>>> End training. [time %.2f]' % (time.time() - t)
 
