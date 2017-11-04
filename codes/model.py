@@ -90,20 +90,22 @@ class Caption(nn.Module):
         # dropout on LSTM input
         embeddings = self.dropout(embeddings)
 
-        # LSTM initial states
-        lstm_state_h = self.init_state_h(self.dropout(features))
-        lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
-        lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
-        lstm_state_c = self.init_state_h(self.dropout(features))
-        lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
-        lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
-
         # packed embeddings -> contains image feature and embedded words
         packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
 
-        # all hidden outputs, sth. like (1, batch_size, hidden_size)
-        hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
-        # hiddens, _ = self.rnn(packed)
+        # LSTM initial states
+        if Config.lstm_init_state:
+            lstm_state_h = self.init_state_h(self.dropout(features))
+            lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
+            lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
+            lstm_state_c = self.init_state_h(self.dropout(features))
+            lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
+            lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
+
+            # all hidden outputs, sth. like (1, batch_size, hidden_size)
+            hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
+        else:
+            hiddens, _ = self.rnn(packed)
 
         # dropout on LSTM output
         outputs = self.dropout(hiddens[0])
@@ -133,10 +135,16 @@ class Caption(nn.Module):
         nn.init.uniform(self.rnn.bias_ih_l0, -v, v)
         nn.init.uniform(self.rnn.bias_hh_l0, -v, v)
 
+        # orthogonal initialization
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[0: Config.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[Config.hidden_size: 2 * Config.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[2 * Config.hidden_size: 3 * Config.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[3 * Config.hidden_size: 4 * Config.hidden_size])
+
         # print shapes
         # print 'weight_ih_l0', self.rnn.weight_ih_l0.shape
         # print 'weight_hh_l0', self.rnn.weight_hh_l0.shape
-        # print 'bias_ih_l0', self.rnn.bias_ih_l0.shape
+        # print 'bias_ih_l0', self.rnn.bias_ih_l0.shape  # this is forget gate?
         # print 'bias_hh_l0', self.rnn.bias_hh_l0.shape
 
         # Jozefowicz, R., Zaremba, W., & Sutskever, I. (2015).
@@ -144,7 +152,6 @@ class Caption(nn.Module):
         #  In Proceedings of the 32nd International Conference on Machine Learning (ICML-15)
         #  (pp. 2342-2350).
         # self.rnn.bias_ih_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
-        # self.rnn.bias_hh_l0.data[self.hidden_size:2 * self.hidden_size].uniform_(0.9, 1.1)
 
     def beam_search(self, feature):
         """inference with beam search
@@ -167,17 +174,22 @@ class Caption(nn.Module):
         input = self.input(feature)
         input = input.unsqueeze(0).unsqueeze(0)  # (1, 1, embed_size)
 
-        # initialize states
+        if Config.lstm_init_state:
+            # initialize states
+            feature = feature.unsqueeze(0)  # (1, input_size)
+            lstm_state_h = self.init_state_h(self.dropout(feature))
+            lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
+            lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
+            lstm_state_c = self.init_state_h(self.dropout(feature))
+            lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
+            lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
+            # print lstm_state_c.shape
+            # print lstm_state_h.shape
 
-        # LSTM initial states
-        lstm_state_h = self.init_state_h(self.dropout(feature))
-        lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
-        lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
-        lstm_state_c = self.init_state_h(self.dropout(feature))
-        lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
-        lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
-
-        state = (lstm_state_h, lstm_state_c)
+            state = (lstm_state_h, lstm_state_c)
+        else:
+            state = (Variable(torch.zeros(self.num_layers, 1, self.hidden_size)),
+                     Variable(torch.zeros(self.num_layers, 1, self.hidden_size)))
         if Config.use_cuda:
             state = [s.cuda() for s in state]
 

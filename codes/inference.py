@@ -16,7 +16,7 @@ from data_engine import DataEngine
 from config import Config
 
 
-def main(file_name=Config.inference_file):
+def main(which_set='valid'):
 
     # init data engine
     data_engine = DataEngine()
@@ -26,14 +26,16 @@ def main(file_name=Config.inference_file):
     if Config.use_cuda:
         model.cuda()
 
+    ckpt_name = Config.infer_ckpt_name if which_set == 'valid' else Config.test_ckpt_name
+
     # loaded trained model parameters
     print '>>> Loading checkpoint...'
-    if os.path.isfile(Config.train_ckpt_name):
-        checkpoint = torch.load(Config.train_ckpt_name)
+    if os.path.isfile(ckpt_name):
+        checkpoint = torch.load(ckpt_name)
         print ' checkpoint found: [%s]' % (checkpoint['time'])
         model.load_state_dict(checkpoint['state_dict'])
     else:
-        print ' checkpoint not found at %s.' % Config.train_ckpt_name
+        print ' checkpoint not found at %s.' % ckpt_name
         return
 
     print '>>> Start inferencing...'
@@ -44,7 +46,10 @@ def main(file_name=Config.inference_file):
     bar = progressbar.ProgressBar(maxval=len(data_engine.valid_ids))
     bar.start()
 
-    for name, feature in data_engine.iter_valid_image_features():
+    generator = data_engine.iter_valid_image_features \
+        if which_set == 'valid' else data_engine.iter_test_image_features
+
+    for name, feature in generator():
 
         feature = Variable(torch.from_numpy(feature))
         feature = feature.cuda() if Config.use_cuda else feature
@@ -67,6 +72,8 @@ def main(file_name=Config.inference_file):
 
     print '>>> Saving inference results to %s...' % (Config.inference_file)
 
+    file_name = Config.inference_file if which_set == 'valid' else Config.test_inference_file
+
     # end
     result_json = json.dumps(result, ensure_ascii=False)
     with io.open(file_name, 'w', encoding='utf-8') as file:
@@ -77,4 +84,4 @@ def main(file_name=Config.inference_file):
 
 if __name__ == '__main__':
 
-    main()
+    main(which_set='test')

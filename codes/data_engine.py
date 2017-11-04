@@ -62,19 +62,22 @@ class DataEngine():
         # caption
         self.cap = load_pkl(dataset_root + 'caps.pkl')
 
-        # image feature of shape (1, 1536)
+        # image feature of shape (1, 1536).
         self.feature = load_pkl(dataset_root + 'feature.pkl')
+        self.feature_test = load_pkl(dataset_root + 'feature_test.pkl')
 
-        # vid-cid pairs for train/valid/test.
+        # vid-cid pairs for train/valid.
         self.train = load_pkl(dataset_root + 'train.pkl')
         self.valid = load_pkl(dataset_root + 'valid.pkl')
 
         # vids for trian/valid/test, coresponding with elements above.
         self.train_ids = load_pkl(dataset_root + 'train_vids.pkl')
         self.valid_ids = load_pkl(dataset_root + 'valid_vids.pkl')
+        self.test_ids = load_pkl(dataset_root + 'test_vids.pkl')
 
         # saved vid2name
         self.vid2name = load_pkl(dataset_root + 'vid2name.pkl')
+        self.vid2name_test = load_pkl(dataset_root + 'vid2name_test.pkl')
 
         # worddict: word -> id
         self.worddict = load_pkl(dataset_root + 'worddict.pkl')
@@ -103,6 +106,13 @@ class DataEngine():
             name = self.vid2name[id].split('/')[-1]  # './train/.../dsakfsda.jpg' -> 'dsakfsda.jpg'
             name = name.split('.')[0]  # 'dsakfsda'
             yield (name, self.feature[id][0, :])
+
+    def iter_test_image_features(self):
+
+        for id in self.test_ids:
+            name = self.vid2name_test[id].split('/')[-1]
+            name = name.split('.')[0]
+            yield (name, self.feature_test[id][0, :])
 
     def prepare_data(self, IDs):
         seqs = []

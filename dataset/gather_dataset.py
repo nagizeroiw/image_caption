@@ -23,6 +23,7 @@ caps_name = 'caps.pkl'
 vid2name_name = 'vid2name.pkl'
 train_vids_name = 'train_vids.pkl'
 valid_vids_name = 'valid_vids.pkl'
+test_vids_name = 'test_vids.pkl'
 train_name = 'train.pkl'
 valid_name = 'valid.pkl'
 worddict_name = 'worddict.pkl'
@@ -47,9 +48,6 @@ def load_test_set():
     # dict of 'vid100002' -> './test1/***images**/3905ofjoawienf.jpg'
     vid2name_test = {}
 
-    dump_pkl(test_vids, 'test_vids.pkl')
-    dump_pkl(vid2name_test, 'vid2name_test.pkl')
-
     image_files = os.listdir(test_images_dir)
     image_files = [f for f in image_files if os.path.isfile(os.path.join(test_images_dir, f))]
 
@@ -59,9 +57,9 @@ def load_test_set():
     for i, image_name in enumerate(image_files):
         vid = 'vid%d' % (current_test_vid + i)
         test_vids.append(vid)
-        vid2name_test[vid] = os.path.join(test_images_dir, f)
+        vid2name_test[vid] = os.path.join(test_images_dir, image_name)
 
-    dump_pkl(test_vids, 'test_vids.pkl')
+    dump_pkl(test_vids, test_vids_name)
     dump_pkl(vid2name_test, 'vid2name_test.pkl')
     print len(test_vids)
 
@@ -236,6 +234,7 @@ def look_dataset():
     vid2name = load_pkl(vid2name_name)
     train_vids = load_pkl(train_vids_name)
     valid_vids = load_pkl(valid_vids_name)
+    test_vids = load_pkl(test_vids_name)
     train = load_pkl(train_name)
     valid = load_pkl(valid_name)
     worddict = load_pkl(worddict_name)
@@ -246,8 +245,10 @@ def look_dataset():
     print ' >>> vid2name samples:', '%s -> %s' % ('vid2', vid2name['vid2'])
 
     print ' >>> caps size:', len(caps)
-    print ' >>> train_vids size, valid_vids size:', \
-        len(train_vids), len(valid_vids)
+    print ' >>> train_vids size, valid_vids, test_vids size:', \
+        len(train_vids), len(valid_vids), len(test_vids)
+
+    print ' >>> test_vids sample:', test_vids[:20]
 
     print ' >>> total captions:', sum(
         [len(caplist) for caplist in caps.values()])
