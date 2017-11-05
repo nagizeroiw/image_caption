@@ -72,7 +72,7 @@ def main():
             print ' checkpoint not found at %s.' % Config.train_ckpt_name
 
     # training tools
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(ignore_index=0)
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr=Config.learning_rate, weight_decay=1e-4)
 
@@ -234,7 +234,7 @@ def main():
                 inference.main()
 
                 # evaluation
-                m1_score = compute_m1(Config.json_dir,
+                m1_score = compute_m1(Config.inference_file,
                                       '/home/kesu/image_caption/dataset/valid_reference.json')
 
                 # show and save results

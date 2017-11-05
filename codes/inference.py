@@ -70,9 +70,9 @@ def main(which_set='valid'):
 
     bar.finish()
 
-    print '>>> Saving inference results to %s...' % (Config.inference_file)
-
     file_name = Config.inference_file if which_set == 'valid' else Config.test_inference_file
+
+    print '>>> Saving inference results to %s...' % (file_name)
 
     # end
     result_json = json.dumps(result, ensure_ascii=False)

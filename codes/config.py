@@ -49,6 +49,10 @@ class Config():
     beam_size = 3
     # if lstm init state trainable
     lstm_init_state = False
+    # if attention-applied image feature is fed into LSTM as input
+    visual_attention = False
+    # dim of attention-applied image feature
+    dim_attention = 512
 
     # model name
     model_name = 'bigger_40'
@@ -98,9 +102,9 @@ class Config():
     # eval file
     eval_file = eval_dir + 'result_%s.txt' % model_name
     # plot file
-    loss_plot_file = plot_dir + 'loss_%s.txt' % model_name
+    loss_plot_file = plot_dir + 'loss_%s.png' % model_name
     # eval plot file
-    eval_plot_file = plot_dir + 'eval_%s.txt' % model_name
+    eval_plot_file = plot_dir + 'eval_%s.png' % model_name
     # the frequency of inference output
     inference_freq = 100
     # output json name

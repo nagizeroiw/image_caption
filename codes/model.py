@@ -55,6 +55,7 @@ class Caption(nn.Module):
     def __init__(self,
                  input_size=Config.dim_feature,
                  embedding_size=Config.dim_embedding,
+                 dim_attention=Config.dim_attention,
                  hidden_size=Config.dim_hidden,
                  num_layers=Config.num_layers,
                  n_words=Config.n_words):
@@ -66,11 +67,21 @@ class Caption(nn.Module):
 
         self.input = nn.Linear(input_size, embedding_size)
         self.embedding = nn.Embedding(n_words, embedding_size)
+
+        # self.attention = nn.Sequencial(nn.Linear(), nn.ReLU(), nn.Linear())
+
         self.init_state_h = nn.Linear(input_size, hidden_size)
         self.init_state_c = nn.Linear(input_size, hidden_size)
-        self.rnn = nn.LSTM(embedding_size, hidden_size, num_layers=num_layers)
+
+        lstm_input_size = embedding_size if Config.visual_attention is False \
+            else embedding_size + dim_attention
+
+        self.rnn = nn.LSTM(lstm_input_size, hidden_size, num_layers=num_layers)
+
         self.dropout = nn.Dropout(0.4)
+
         self.output = nn.Linear(hidden_size, n_words)
+
         self.init_weights()
 
     def forward(self, features, seqs, lengths):
@@ -108,6 +119,7 @@ class Caption(nn.Module):
             hiddens, _ = self.rnn(packed)
 
         # dropout on LSTM output
+        # hiddens[0]: (batch_size, hidden_size)
         outputs = self.dropout(hiddens[0])
 
         # sth. like (batch_size, n_words)
@@ -136,10 +148,10 @@ class Caption(nn.Module):
         nn.init.uniform(self.rnn.bias_hh_l0, -v, v)
 
         # orthogonal initialization
-        nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
+        # nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
 
         # print shapes
         # print 'weight_ih_l0', self.rnn.weight_ih_l0.shape
