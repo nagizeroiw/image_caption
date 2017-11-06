@@ -98,7 +98,7 @@ class Caption(nn.Module):
         #   of the last word is fed into the LSTM.
         embeddings = torch.cat((embed_features.unsqueeze(1), embeddings), 1)
 
-        # dropout on LSTM input
+        # dropout on LSTM input. embeddings: (batch_size, 1 + max_seqlen, embedding_size)
         embeddings = self.dropout(embeddings)
 
         # packed embeddings -> contains image feature and embedded words
@@ -113,10 +113,15 @@ class Caption(nn.Module):
             lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
             lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
 
-            # all hidden outputs, sth. like (1, batch_size, hidden_size)
-            hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
         else:
-            hiddens, _ = self.rnn(packed)
+            lstm_state_h = Variable(torch.zeros(self.num_layers, 1, self.hidden_size))
+            lstm_state_c = Variable(torch.zeros(self.num_layers, 1, self.hidden_size))
+
+            lstm_state_h, lstm_state_c = lstm_state_h.cuda(), lstm_state_c.cuda() \
+                if Config.use_cuda else lstm_state_h, lstm_state_c
+
+        # all hidden outputs, sth. like (1, batch_size, hidden_size)
+        hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
 
         # dropout on LSTM output
         # hiddens[0]: (batch_size, length, hidden_size)
