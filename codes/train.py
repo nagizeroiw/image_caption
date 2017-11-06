@@ -72,7 +72,7 @@ def main():
             print ' checkpoint not found at %s.' % Config.train_ckpt_name
 
     # training tools
-    criterion = nn.CrossEntropyLoss(ignore_index=0)
+    criterion = nn.CrossEntropyLoss()
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr=Config.learning_rate, weight_decay=1e-4)
 

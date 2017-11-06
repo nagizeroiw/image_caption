@@ -119,10 +119,10 @@ class Caption(nn.Module):
             hiddens, _ = self.rnn(packed)
 
         # dropout on LSTM output
-        # hiddens[0]: (batch_size, hidden_size)
+        # hiddens[0]: (batch_size, length, hidden_size)
         outputs = self.dropout(hiddens[0])
 
-        # sth. like (batch_size, n_words)
+        # sth. like (batch_size, length, n_words)
         outputs = self.output(outputs)
         return outputs
 
@@ -148,10 +148,10 @@ class Caption(nn.Module):
         nn.init.uniform(self.rnn.bias_hh_l0, -v, v)
 
         # orthogonal initialization
-        # nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
-        # nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
-        # nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
-        # nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
+        nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
+        nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
+        nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
+        nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
 
         # print shapes
         # print 'weight_ih_l0', self.rnn.weight_ih_l0.shape
