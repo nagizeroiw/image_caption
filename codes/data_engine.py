@@ -171,7 +171,7 @@ class DataEngine():
         seq = numpy.zeros((n_samples, Config.maxlen)).astype('int64')
         for idx in range(n_samples):
             seq[idx, :lengths[indices[idx]]] = seqs[indices[idx]]
-            seq[idx, lengths[indices[idx]]] = self.worddict['<eos>']
+            seq[idx, lengths[indices[idx]]:] = self.worddict['<eos>']
 
         length += 1
 

@@ -1,6 +1,6 @@
+*.pyc
 baseline/
 baseline/*
-codes/*.pyc
 codes/eval/data/
 dataset/*.pkl
 dataset/*.pyc

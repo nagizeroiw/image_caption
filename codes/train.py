@@ -71,7 +71,6 @@ def main():
         else:
             print ' checkpoint not found at %s.' % Config.train_ckpt_name
 
-    # training tools
     criterion = nn.CrossEntropyLoss()
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr=Config.learning_rate, weight_decay=1e-4)
@@ -103,19 +102,14 @@ def main():
             if Config.use_cuda:
                 features, seqs = features.cuda(), seqs.cuda()
 
-            # pack targets for computing loss
-            targets = pack_padded_sequence(seqs, lengths, batch_first=True)[0]
-
             # forward, backward, and optimization step
             model.zero_grad()
             outputs = model(features, seqs, lengths)
-            # print outputs.shape
-
-            loss = criterion(outputs, targets)
-
-            # normalization
-            max_length = max(lengths)
-            loss.data[0] /= max_length
+            packed_outputs = pack_padded_sequence(outputs, lengths, batch_first=True)[0]
+            packed_targets = pack_padded_sequence(seqs, lengths, batch_first=True)[0]
+            loss = criterion(packed_outputs, packed_targets)
+            # print loss.data
+            loss.data[0] /= max(lengths)
             loss.backward()
 
             torch.nn.utils.clip_grad_norm(model.parameters(), Config.gradient_clip)
@@ -149,12 +143,13 @@ def main():
                 if Config.use_cuda:
                     features, seqs = features.cuda(), seqs.cuda()
 
-                targets = pack_padded_sequence(seqs, lengths, batch_first=True)[0]
-
                 # forward, and compute loss
                 model.zero_grad()
+
                 outputs = model(features, seqs, lengths)
-                loss = criterion(outputs, targets)
+                packed_outputs = pack_padded_sequence(outputs, lengths, batch_first=True)[0]
+                packed_targets = pack_padded_sequence(seqs, lengths, batch_first=True)[0]
+                loss = criterion(packed_outputs, packed_targets)
 
                 # normalization
                 max_length = max(lengths)

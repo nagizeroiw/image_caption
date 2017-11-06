@@ -74,9 +74,11 @@ class Caption(nn.Module):
         self.init_state_c = nn.Linear(input_size, hidden_size)
 
         lstm_input_size = embedding_size if Config.visual_attention is False \
-            else embedding_size + dim_attention
+            else (embedding_size + dim_attention)
 
-        self.rnn = nn.LSTM(lstm_input_size, hidden_size, num_layers=num_layers)
+        # self.rnn = nn.LSTM(lstm_input_size, hidden_size, num_layers=num_layers)
+
+        self.rnn_cell = nn.LSTMCell(lstm_input_size, hidden_size)
 
         self.dropout = nn.Dropout(0.4)
 
@@ -85,6 +87,9 @@ class Caption(nn.Module):
         self.init_weights()
 
     def forward(self, features, seqs, lengths):
+
+        batch_size = features.size(0)
+        # print batch_size
 
         # (batch_size, embedding_size)
         embed_features = self.input(features)
@@ -100,34 +105,44 @@ class Caption(nn.Module):
 
         # dropout on LSTM input. embeddings: (batch_size, 1 + max_seqlen, embedding_size)
         embeddings = self.dropout(embeddings)
-
         # packed embeddings -> contains image feature and embedded words
-        packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
+        # packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         # LSTM initial states
         if Config.lstm_init_state:
             lstm_state_h = self.init_state_h(self.dropout(features))
             lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
-            lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
             lstm_state_c = self.init_state_h(self.dropout(features))
             lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
-            lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
 
         else:
-            lstm_state_h = Variable(torch.zeros(self.num_layers, 1, self.hidden_size))
-            lstm_state_c = Variable(torch.zeros(self.num_layers, 1, self.hidden_size))
+            lstm_state_h = Variable(torch.zeros(batch_size, self.hidden_size))
+            lstm_state_c = Variable(torch.zeros(batch_size, self.hidden_size))
 
-            lstm_state_h, lstm_state_c = lstm_state_h.cuda(), lstm_state_c.cuda() \
-                if Config.use_cuda else lstm_state_h, lstm_state_c
+            lstm_state_h = lstm_state_h.cuda() if Config.use_cuda else lstm_state_h
+            lstm_state_c = lstm_state_c.cuda() if Config.use_cuda else lstm_state_c
+
+        state = (lstm_state_h, lstm_state_c)
 
         # all hidden outputs, sth. like (1, batch_size, hidden_size)
-        hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
+        # hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
+
+        hiddens = Variable(torch.zeros(Config.maxlen, self.num_layers, batch_size, self.hidden_size))
+        hiddens = hiddens.cuda() if Config.use_cuda else hiddens
+
+        # run LSTM forwarding
+        for t in range(Config.maxlen):
+            state = self.rnn_cell(embeddings[:, t, :], state)
+            hiddens[t] = state[0]
+
+        # hiddens -> (batch_size, maxlen, n_words)
+        hiddens = torch.transpose(hiddens.squeeze(1), 0, 1)
 
         # dropout on LSTM output
         # hiddens[0]: (batch_size, length, hidden_size)
-        outputs = self.dropout(hiddens[0])
+        outputs = self.dropout(hiddens)
 
-        # sth. like (batch_size, length, n_words)
+        # (batch_size, length, n_words)
         outputs = self.output(outputs)
         return outputs
 
@@ -147,16 +162,16 @@ class Caption(nn.Module):
         self.init_state_c.weight.data.uniform_(-v, v)
         self.init_state_c.bias.data.fill_(0)
 
-        nn.init.uniform(self.rnn.weight_ih_l0, -v, v)
-        nn.init.uniform(self.rnn.weight_hh_l0, -v, v)
-        nn.init.uniform(self.rnn.bias_ih_l0, -v, v)
-        nn.init.uniform(self.rnn.bias_hh_l0, -v, v)
+        nn.init.uniform(self.rnn_cell.weight_ih, -v, v)
+        nn.init.uniform(self.rnn_cell.weight_hh, -v, v)
+        nn.init.uniform(self.rnn_cell.bias_ih, -v, v)
+        nn.init.uniform(self.rnn_cell.bias_hh, -v, v)
 
         # orthogonal initialization
-        nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
+        # nn.init.orthogonal(self.rnn_cell.weight_hh[0: self.hidden_size])
+        # nn.init.orthogonal(self.rnn_cell.weight_hh[self.hidden_size: 2 * self.hidden_size])
+        # nn.init.orthogonal(self.rnn_cell.weight_hh[2 * self.hidden_size: 3 * self.hidden_size])
+        # nn.init.orthogonal(self.rnn_cell.weight_hh[3 * self.hidden_size: 4 * self.hidden_size])
 
         # print shapes
         # print 'weight_ih_l0', self.rnn.weight_ih_l0.shape
@@ -196,17 +211,15 @@ class Caption(nn.Module):
             feature = feature.unsqueeze(0)  # (1, input_size)
             lstm_state_h = self.init_state_h(self.dropout(feature))
             lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
-            lstm_state_h = lstm_state_h.unsqueeze(0)  # (1, batch_size, hidden_size)
             lstm_state_c = self.init_state_h(self.dropout(feature))
             lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
-            lstm_state_c = lstm_state_c.unsqueeze(0)  # (1, batch_size, hidden_size)
             # print lstm_state_c.shape
             # print lstm_state_h.shape
 
             state = (lstm_state_h, lstm_state_c)
         else:
-            state = (Variable(torch.zeros(self.num_layers, 1, self.hidden_size)),
-                     Variable(torch.zeros(self.num_layers, 1, self.hidden_size)))
+            state = (Variable(torch.zeros(1, self.hidden_size)),
+                     Variable(torch.zeros(1, self.hidden_size)))
         if Config.use_cuda:
             state = [s.cuda() for s in state]
 
