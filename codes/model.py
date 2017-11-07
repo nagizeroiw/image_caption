@@ -264,8 +264,6 @@ class Caption(nn.Module):
 
             words, logprobs, new_states = get_topk_words(embed, state_feed)
 
-            # print words.shape, logprobs.shape
-
             for i, p_sentence in enumerate(sentence_list):
                 state = (new_states[0].narrow(0, i, 1),
                          new_states[1].narrow(0, i, 1))

@@ -105,6 +105,8 @@ class Config():
     loss_plot_file = plot_dir + 'loss_%s.png' % model_name
     # eval plot file
     eval_plot_file = plot_dir + 'eval_%s.png' % model_name
+    # best model checkpoint file
+    best_ckpt_file = ckpt_dir + 'best_%s.ckpt' % model_name
     # the frequency of inference output
     inference_freq = 100
     # output json name
