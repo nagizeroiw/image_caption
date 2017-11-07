@@ -239,7 +239,7 @@ class Caption(nn.Module):
 
             for i, p_sentence in enumerate(sentence_list):
                 state = (new_states[0].narrow(1, i, 1),
-                         new_states[0].narrow(1, i, 1))
+                         new_states[1].narrow(1, i, 1))
 
                 # (1, 1, 512)
                 # print 'ready to save', state[0].shape
