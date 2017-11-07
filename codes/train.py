@@ -242,7 +242,7 @@ def main():
                 if m1_score['Bleu_4'] >= max(eval_b):
 
                     print '>>> Saving best performance checkpoint uid%d to %s.' \
-                        % (uid, Config.best_ckpt_name)
+                        % (uid, Config.best_ckpt_file)
                     torch.save({'state_dict': model.state_dict(),
                                 'uid': uid,
                                 'start_epoch': start_epoch + Config.n_epoch,
@@ -251,7 +251,7 @@ def main():
                                 'valid_iters': valid_iters,
                                 'valid_losses': valid_losses,
                                 'time': str(datetime.datetime.now())},
-                               Config.train_ckpt_name)
+                               Config.best_ckpt_file)
 
                 # save results to file
                 with open(Config.eval_file, 'a') as file:
