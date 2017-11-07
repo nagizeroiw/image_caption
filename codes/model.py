@@ -106,7 +106,6 @@ class Caption(nn.Module):
         # dropout on LSTM input. embeddings: (batch_size, 1 + max_seqlen, embedding_size)
         embeddings = self.dropout(embeddings)
         # packed embeddings -> contains image feature and embedded words
-        # packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
 
         # LSTM initial states
         if Config.lstm_init_state:
@@ -127,7 +126,7 @@ class Caption(nn.Module):
         # all hidden outputs, sth. like (1, batch_size, hidden_size)
         # hiddens, _ = self.rnn(packed, (lstm_state_h, lstm_state_c))
 
-        hiddens = Variable(torch.zeros(Config.maxlen, self.num_layers, batch_size, self.hidden_size))
+        hiddens = Variable(torch.zeros(Config.maxlen, batch_size, self.hidden_size))
         hiddens = hiddens.cuda() if Config.use_cuda else hiddens
 
         # run LSTM forwarding
@@ -196,23 +195,32 @@ class Caption(nn.Module):
 
         # function for one-step LSTM
         def get_topk_words(embed, states):
-            hidden, new_states = self.rnn(embed, states)
-            output = self.output(hidden.squeeze(0))
+            # embed (batch_size, embed_size (== input_size))
+            # states tuple (h, c), both are (batch_size, hidden_size)
+            states = self.rnn_cell(embed, states)
+            # print 'input', embed.size(), 'states', states[0].size(), states[1].size()
+
+            # output (batch_size, n_words)
+            output = self.output(states[0])
+            # print 'output', output.size()
+
             logprobs = torch.nn.functional.log_softmax(output, dim=1)
+            # print 'after softmax', logprobs.size()
             logprobs, words = logprobs.topk(Config.beam_size, dim=1)
-            return words.data, logprobs.data, new_states
+            # print 'topk', logprobs.size(), words.size()
+            return words.data, logprobs.data, states
 
         # embedding image feature
         input = self.input(feature)
-        input = input.unsqueeze(0).unsqueeze(0)  # (1, 1, embed_size)
+        input = input.unsqueeze(0)  # (1, embed_size)
 
         if Config.lstm_init_state:
             # initialize states
             feature = feature.unsqueeze(0)  # (1, input_size)
             lstm_state_h = self.init_state_h(self.dropout(feature))
-            lstm_state_h = nn.functional.tanh(lstm_state_h)  # (batch_size, hidden_size)
+            lstm_state_h = nn.functional.tanh(lstm_state_h)  # (1, hidden_size)
             lstm_state_c = self.init_state_h(self.dropout(feature))
-            lstm_state_c = nn.functional.tanh(lstm_state_c)  # (batch_size, hidden_size)
+            lstm_state_c = nn.functional.tanh(lstm_state_c)  # (1, hidden_size)
             # print lstm_state_c.shape
             # print lstm_state_h.shape
 
@@ -243,24 +251,24 @@ class Caption(nn.Module):
             input_feed = torch.LongTensor([c.sentence[-1] for c in sentence_list])
             input_feed = input_feed.cuda() if Config.use_cuda else input_feed
             input_feed = Variable(input_feed, volatile=True)
+
+            # print 'input_feed constructed', input_feed.size()
+
             state_feed = [c.state for c in sentence_list]
 
             state_feed_h, state_feed_c = zip(*state_feed)
-            state_feed = (torch.cat(state_feed_h, 1),
-                          torch.cat(state_feed_c, 1))
+            state_feed = (torch.cat(state_feed_h, 0),
+                          torch.cat(state_feed_c, 0))
 
-            # (1, 5, 512)
-            # print 'before feed', state_feed[0].shape
+            embed = self.embedding(input_feed)
 
-            embed = self.embedding(input_feed).view(1, len(input_feed), -1)
             words, logprobs, new_states = get_topk_words(embed, state_feed)
 
-            for i, p_sentence in enumerate(sentence_list):
-                state = (new_states[0].narrow(1, i, 1),
-                         new_states[0].narrow(1, i, 1))
+            # print words.shape, logprobs.shape
 
-                # (1, 1, 512)
-                # print 'ready to save', state[0].shape
+            for i, p_sentence in enumerate(sentence_list):
+                state = (new_states[0].narrow(0, i, 1),
+                         new_states[1].narrow(0, i, 1))
 
                 for k in range(Config.beam_size):
                     sentence = p_sentence.sentence + [words[i, k]]

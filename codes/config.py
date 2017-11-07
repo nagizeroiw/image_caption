@@ -26,7 +26,7 @@ class Config():
     # total number of words in the worddict
     # (indicates the maximum possible value of worddict)
     # actually when words that freq. < 5 are elimated, n_words ~= 9000.
-    n_words = 10500
+    n_words = 8270
     # dim of pre-trained CNN.
     dim_feature = 1536
     # batch size of SGD (both train and valid)

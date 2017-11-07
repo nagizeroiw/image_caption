@@ -363,9 +363,9 @@ if __name__ == '__main__':
     # load_dataset()
 
     # load test set of the original data format for inference
-    load_test_set()
+    # load_test_set()
 
     # observe dataset
-    # look_dataset()
+    look_dataset()
 
     # build_valid_reference_json()

@@ -58,7 +58,7 @@ def main(which_set='valid'):
         sentence = model.inference(feature)
 
         # make the sentence ALIVE!
-        sentence = u''.join([data_engine.word_idict[w] for w in sentence])
+        sentence = u''.join([data_engine.get_word(w) for w in sentence])
 
         i += 1
         cap = {}

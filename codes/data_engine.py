@@ -96,6 +96,13 @@ class DataEngine():
 
         print '>>> image_caption dataset loaded. [time %.2f]' % (time.time() - t)
 
+    def get_word(self, word_id):
+
+        if word_id in self.word_idict:
+            return self.word_idict[word_id]
+        else:
+            return '<UNK>'
+
     def iter_valid_image_features(self):
         """return iteration of all valid image features.
 

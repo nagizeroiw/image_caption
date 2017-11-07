@@ -190,12 +190,12 @@ def main():
                         # print ground truth
                         print ' > id: %s' % ids[q]
                         print '  ground truth:', \
-                            u''.join([data_engine.word_idict[w] for w in seq[:length]])
+                            u''.join([data_engine.get_word(w) for w in seq[:length]])
 
                         # print model outputs
                         for i in range(min(3, len(scores))):
                             print '  output #%d (%6.4f):' % (i, scores[i]), \
-                                u''.join([data_engine.word_idict[w] for w in captions[i]])
+                                u''.join([data_engine.get_word(w) for w in captions[i]])
 
                     print '[Sampling] Sampling ended. Average time: %4.2fs' \
                         % ((time.time() - t0) / Config.sample_count)
