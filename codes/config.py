@@ -55,7 +55,7 @@ class Config():
     dim_attention = 512
 
     # model name
-    model_name = 'bigger_orthogonal'
+    model_name = 'orthogonal_lstm_cell'
 
     # ###################### Training ######################
 
