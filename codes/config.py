@@ -53,9 +53,15 @@ class Config():
     visual_attention = False
     # dim of attention-applied image feature
     dim_attention = 512
+    # orthogonal initialization
+    orthogonal = False
 
     # model name
+<<<<<<< HEAD
     model_name = 'orthogonal_lstm_cell'
+=======
+    model_name = 'bigger'
+>>>>>>> 8140610437164ed8dbe182302c5c605743317bae
 
     # ###################### Training ######################
 
@@ -113,6 +119,6 @@ class Config():
     inference_file = json_dir + 'inferenced_%s.json' % model_name
 
     # the name of checkpoint file used when testing
-    test_ckpt_name = ckpt_dir + 'training.ckpt'
+    test_ckpt_name = ckpt_dir + 'best_bigger.ckpt'
     # output test json file to hand in
     test_inference_file = json_dir + 'test_inferenced.json'
