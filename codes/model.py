@@ -148,10 +148,11 @@ class Caption(nn.Module):
         nn.init.uniform(self.rnn.bias_hh_l0, -v, v)
 
         # orthogonal initialization
-        nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
-        nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
+        if Config.orthogonal:
+            nn.init.orthogonal(self.rnn.weight_hh_l0[0: self.hidden_size])
+            nn.init.orthogonal(self.rnn.weight_hh_l0[self.hidden_size: 2 * self.hidden_size])
+            nn.init.orthogonal(self.rnn.weight_hh_l0[2 * self.hidden_size: 3 * self.hidden_size])
+            nn.init.orthogonal(self.rnn.weight_hh_l0[3 * self.hidden_size: 4 * self.hidden_size])
 
         # print shapes
         # print 'weight_ih_l0', self.rnn.weight_ih_l0.shape
