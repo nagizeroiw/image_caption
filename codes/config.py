@@ -57,11 +57,7 @@ class Config():
     orthogonal = False
 
     # model name
-<<<<<<< HEAD
-    model_name = 'orthogonal_lstm_cell'
-=======
-    model_name = 'bigger'
->>>>>>> 8140610437164ed8dbe182302c5c605743317bae
+    model_name = 'attention'
 
     # ###################### Training ######################
 
