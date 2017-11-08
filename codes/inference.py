@@ -29,7 +29,7 @@ def main(which_set='valid'):
     ckpt_name = Config.infer_ckpt_name if which_set == 'valid' else Config.test_ckpt_name
 
     # loaded trained model parameters
-    print '>>> Loading checkpoint...'
+    print '>>> Loading checkpoint %s...' % ckpt_name
     if os.path.isfile(ckpt_name):
         checkpoint = torch.load(ckpt_name)
         print ' checkpoint found: [%s]' % (checkpoint['time'])
