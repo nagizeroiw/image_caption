@@ -73,7 +73,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     params = list(model.parameters())
-    optimizer = torch.optim.Adam(params, lr=Config.learning_rate, weight_decay=1e-4)
+    optimizer = torch.optim.Adam(params, lr=Config.learning_rate, weight_decay=Config.weight_decay)
 
     # last_epoch?
     # last_epoch = -1 if start_epoch == 0 else start_epoch

@@ -65,16 +65,18 @@ class Caption(nn.Module):
         self.num_layers = num_layers
         self.hidden_size = hidden_size
 
-        self.input = nn.Linear(input_size, embedding_size)
+        lstm_input_size = embedding_size if Config.visual_attention is False \
+            else (embedding_size + dim_attention)
+
+        self.input = nn.Linear(input_size, lstm_input_size)
         self.embedding = nn.Embedding(n_words, embedding_size)
+
+        self.attention = nn.Linear(input_size, dim_attention)
 
         # self.attention = nn.Sequencial(nn.Linear(), nn.ReLU(), nn.Linear())
 
         self.init_state_h = nn.Linear(input_size, hidden_size)
         self.init_state_c = nn.Linear(input_size, hidden_size)
-
-        lstm_input_size = embedding_size if Config.visual_attention is False \
-            else (embedding_size + dim_attention)
 
         # self.rnn = nn.LSTM(lstm_input_size, hidden_size, num_layers=num_layers)
 
@@ -91,21 +93,11 @@ class Caption(nn.Module):
         batch_size = features.size(0)
         # print batch_size
 
-        # (batch_size, embedding_size)
+        # (batch_size, lstm_input_size)
         embed_features = self.input(features)
 
         # (batch_size, max_seqlen, embedding_size)
         embeddings = self.embedding(seqs)
-
-        # (batch_size, 1 + max_seqlen, embedding_size)
-        # 'features' is fed into the LSTM as the initial input
-        # at each following time step, a embedded represention
-        #   of the last word is fed into the LSTM.
-        embeddings = torch.cat((embed_features.unsqueeze(1), embeddings), 1)
-
-        # dropout on LSTM input. embeddings: (batch_size, 1 + max_seqlen, embedding_size)
-        embeddings = self.dropout(embeddings)
-        # packed embeddings -> contains image feature and embedded words
 
         # LSTM initial states
         if Config.lstm_init_state:
@@ -131,7 +123,29 @@ class Caption(nn.Module):
 
         # run LSTM forwarding
         for t in range(Config.maxlen):
-            state = self.rnn_cell(embeddings[:, t, :], state)
+
+            if Config.visual_attention:
+                # (batch_size, attention_dim)
+                attentioned = self.attention(features)
+
+            if t == 0:
+
+                # (batch_size, lstm_input_size)
+                # do not apply attention on first timestep (when image feature is fed as input)
+                input = embed_features
+            else:
+
+                # (batch_size, embed_dim)
+                word_embeddings = embeddings[:, t - 1, :]
+                if Config.visual_attention:
+                    # (batch_size, attention_dim + embed_dim)
+                    input = torch.cat((attentioned, word_embeddings), 1)
+                else:
+                    input = word_embeddings
+
+            input = self.dropout(input)
+
+            state = self.rnn_cell(input, state)
             hiddens[t] = state[0]
 
         # hiddens -> (batch_size, maxlen, n_words)
@@ -160,6 +174,9 @@ class Caption(nn.Module):
 
         self.init_state_c.weight.data.uniform_(-v, v)
         self.init_state_c.bias.data.fill_(0)
+
+        self.attention.weight.data.uniform_(-v, v)
+        self.attention.bias.data.fill_(0)
 
         nn.init.uniform(self.rnn_cell.weight_ih, -v, v)
         nn.init.uniform(self.rnn_cell.weight_hh, -v, v)
@@ -260,8 +277,22 @@ class Caption(nn.Module):
             state_feed_h, state_feed_c = zip(*state_feed)
             state_feed = (torch.cat(state_feed_h, 0),
                           torch.cat(state_feed_c, 0))
+            # state_feed[0, 1] both (batch_size, hidden_size)
 
+            # (batch_size, embed_size)
             embed = self.embedding(input_feed)
+
+            # #### add attention here
+            if Config.visual_attention:
+                # attentioned (dim_attention)
+                attentioned = self.attention(feature)
+
+                # (batch_size, dim_attention)
+                attentioned = attentioned.repeat(embed.size(0), 1)
+                # assert (attentioned.data[0, :] == attentioned.data[1, :]).all()
+
+                # (batch_size, lstm_input_size)
+                embed = torch.cat((attentioned, embed), 1)
 
             words, logprobs, new_states = get_topk_words(embed, state_feed)
 

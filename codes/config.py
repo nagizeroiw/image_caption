@@ -33,7 +33,7 @@ class Config():
     batch_size = 64
     # num of examples per epoch
     #  this number is not precise.
-    #  And this number is not used any more.
+    #  And this number is not being used any more.
     num_examples = 586363
 
     # ###################### Model ######################
@@ -48,7 +48,7 @@ class Config():
     # size of beam search
     beam_size = 3
     # if lstm init state trainable
-    lstm_init_state = False
+    lstm_init_state = True
     # if attention-applied image feature is fed into LSTM as input
     visual_attention = False
     # dim of attention-applied image feature
@@ -57,7 +57,7 @@ class Config():
     orthogonal = False
 
     # model name
-    model_name = 'attention'
+    model_name = 'lstm_init_state'
 
     # ###################### Training ######################
 
@@ -69,6 +69,8 @@ class Config():
     n_updates = 1000000
     # learning_rate
     learning_rate = 2e-4
+    # weight decay
+    weight_decay = 1e-4
     # gradient clip
     gradient_clip = 5.0
     # the frequency of log pringing when training
